@@ -11,7 +11,7 @@
 // @ is an alias to /src
 // class AudioRecorder {
 // }
-import lamejs from 'lamejs'
+// import lamejs from 'lamejs'
 export default {
     // name: '录音功能',
     // 参考文章
@@ -31,11 +31,10 @@ export default {
         playRecord: function (arrayBuffer) {
             /* eslint-disable */
             let blob = new Blob([new Uint8Array(arrayBuffer)])
-            console.log('lamejs', lamejs)
             let blobUrl = URL.createObjectURL(blob)
             this.$refs.audio.src = blobUrl
             // console.log('blobUrl', blobUrl)
-            // let file = new window.File([blob], '文件名字', {type: 'audio/wav'})
+            let file = new window.File([blob], '文件名字', {type: 'audio/wav'})
             // console.log(file)
             let aTag = document.createElement('a')
             aTag.setAttribute('download', 'downloadFile.wav')
@@ -43,22 +42,24 @@ export default {
             document.body.appendChild(aTag)
             aTag.click()
             document.body.removeChild(aTag)
+            // console.log('lamejs', lamejs)
+            // let channels = 1
+            // let sampleRate = 44100
+            // let kbps = 128
+            // let mp3encoder = new lamejs.Mp3Encoder(channels, sampleRate, kbps)
         },
         beginRecord: function () {
             let that = this
             window.navigator.mediaDevices.getUserMedia({
                 audio: {
-                    // sampleRate: 44100,
-                    bitRate: 8,
-                    // sampleRate: {},
-                    channelCount: 2,
-                    volume: 1.0
+                    sampleRate: 44100, // 采样率
+                    channelCount: 2,   // 声道
+                    volume: 1.0        // 音量
                 }
             }).then(mediaStream => {
                 that.mediaStream = mediaStream
                 let audioContext = new (window.AudioContext || window.webkitAudioContext)
                 let mediaNode = audioContext.createMediaStreamSource(mediaStream)
-                console.log('mediaNode', mediaNode)
                 that.mediaNode = mediaNode
                 let jsNode = that.createJSNode(audioContext)
                 that.jsNode = jsNode
@@ -67,6 +68,7 @@ export default {
                     let audioBuffer = event.inputBuffer
                     let leftChannelData = audioBuffer.getChannelData(0)
                     let rightChannelData = audioBuffer.getChannelData(1)
+                    // console.log('leftChannelData', leftChannelData)
                     that.leftDataList.push(leftChannelData.slice(0))
                     that.rightDataList.push(rightChannelData.slice(0))
                 }
@@ -78,7 +80,7 @@ export default {
             })
         },
         createJSNode: function (audioContext) {
-            const BUFFER_SIZE = 4096
+            const BUFFER_SIZE = 512
             const INPUT_CHANNEL_COUNT = 2
             const OUTPUT_CHANNEL_COUNT = 2
             let creator = audioContext.createScriptProcessor || audioContext.createJavaScriptNode
