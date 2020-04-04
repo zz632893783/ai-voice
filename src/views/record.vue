@@ -13,6 +13,8 @@
 // }
 export default {
     name: '录音功能',
+    // 参考文章
+    url: 'https://zhuanlan.zhihu.com/p/43581133?ADUIN=3336098807',
     data: function () {
         return {
             leftDataList: [],
