@@ -2,8 +2,8 @@
     <div class="home">
         <!-- <input type="file" v-on:change="playMusicFunc" class="select-file"> -->
         <audio ref="audio" class="audio-node" autoplay></audio>
-        <button v-on:click="beginRecord">开始录音</button>
-        <button v-on:click="stopRecord">停止录音</button>
+        <el-button v-on:click="beginRecord">开始录音</el-button>
+        <el-button v-on:click="stopRecord">停止录音</el-button>
     </div>
 </template>
 
@@ -11,8 +11,9 @@
 // @ is an alias to /src
 // class AudioRecorder {
 // }
+import lamejs from 'lamejs'
 export default {
-    name: '录音功能',
+    // name: '录音功能',
     // 参考文章
     url: 'https://zhuanlan.zhihu.com/p/43581133?ADUIN=3336098807',
     data: function () {
@@ -30,15 +31,26 @@ export default {
         playRecord: function (arrayBuffer) {
             /* eslint-disable */
             let blob = new Blob([new Uint8Array(arrayBuffer)])
+            console.log('lamejs', lamejs)
             let blobUrl = URL.createObjectURL(blob)
             this.$refs.audio.src = blobUrl
-            console.log('blobUrl', blobUrl)
+            // console.log('blobUrl', blobUrl)
+            // let file = new window.File([blob], '文件名字', {type: 'audio/wav'})
+            // console.log(file)
+            let aTag = document.createElement('a')
+            aTag.setAttribute('download', 'downloadFile.wav')
+            aTag.setAttribute('href', blobUrl)
+            document.body.appendChild(aTag)
+            aTag.click()
+            document.body.removeChild(aTag)
         },
         beginRecord: function () {
             let that = this
             window.navigator.mediaDevices.getUserMedia({
                 audio: {
-                    sampleRate: 44100,
+                    // sampleRate: 44100,
+                    bitRate: 8,
+                    // sampleRate: {},
                     channelCount: 2,
                     volume: 1.0
                 }
@@ -46,6 +58,7 @@ export default {
                 that.mediaStream = mediaStream
                 let audioContext = new (window.AudioContext || window.webkitAudioContext)
                 let mediaNode = audioContext.createMediaStreamSource(mediaStream)
+                console.log('mediaNode', mediaNode)
                 that.mediaNode = mediaNode
                 let jsNode = that.createJSNode(audioContext)
                 that.jsNode = jsNode
@@ -103,6 +116,7 @@ export default {
             return data
         },
         createWavFile: function (audioData) {
+            // console.log('audioData', audioData)
             const WAV_HEAD_SIZE = 44
             let buffer = new ArrayBuffer(audioData.length * 2 + WAV_HEAD_SIZE)
             // 需要用一个view来操控buffer
