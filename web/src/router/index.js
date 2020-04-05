@@ -2,6 +2,7 @@ import Vue from 'vue'
 import VueRouter from 'vue-router'
 import record from '../views/record.vue'
 import upload from '../views/upload.vue'
+import robot from '../views/robot.vue'
 
 Vue.use(VueRouter)
 
@@ -13,6 +14,10 @@ const routes = [{
     path: '/upload',
     name: 'upload',
     component: upload
+}, {
+    path: '/robot',
+    name: 'robot',
+    component: robot
 }]
 
 const router = new VueRouter({

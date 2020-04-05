@@ -20,6 +20,9 @@ export default {
             }, {
                 path: '/upload',
                 label: '上传'
+            }, {
+                path: '/robot',
+                label: '聊天机器人'
             }]
         }
     },

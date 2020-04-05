@@ -1,9 +1,20 @@
 <template>
-    <div class="home">
+    <div class="home" v-loading="isLoading">
         <!-- <input type="file" v-on:change="playMusicFunc" class="select-file"> -->
         <audio ref="audio" class="audio-node" autoplay></audio>
-        <el-button v-on:click="beginRecord">开始录音</el-button>
-        <el-button v-on:click="stopRecord">停止录音</el-button>
+        <!-- <el-button v-on:click="beginRecord">开始录音</el-button> -->
+        <!-- <el-button v-on:click="stopRecord">停止录音</el-button> -->
+        <div class="msgList">
+            <div class="item" v-for="(item, index) in msgList" v-bind:key="index">
+                <div class="question">
+                    <p>{{item.question}}</p>
+                </div>
+                <div class="answer">
+                    <p>{{item.answer}}</p>
+                </div>
+            </div>
+        </div>
+        <span v-bind:class="`btn ${recording ? 'record' : 'stop'}`" v-on:click="clickBtn"></span>
     </div>
 </template>
 
@@ -12,6 +23,7 @@
 // class AudioRecorder {
 // }
 // import lamejs from 'lamejs'
+import { uploadFunc } from '@/request.js'
 export default {
     // name: '录音功能',
     // 参考文章
@@ -22,7 +34,10 @@ export default {
             rightDataList: [],
             mediaStream: null,
             mediaNode: null,
-            jsNode: null
+            jsNode: null,
+            recording: false,
+            isLoading: false,
+            msgList: []
         }
     },
     components: {},
@@ -30,16 +45,12 @@ export default {
     methods: {
         playRecord: function (arrayBuffer) {
             /* eslint-disable */
-            let blob = new Blob([new Uint8Array(arrayBuffer)])
-            let blobUrl = URL.createObjectURL(blob)
-            this.$refs.audio.src = blobUrl
-            // let file = new window.File([blob], '文件名字', {type: 'audio/wav'})
-            // let aTag = document.createElement('a')
-            // aTag.setAttribute('download', 'downloadFile.wav')
-            // aTag.setAttribute('href', blobUrl)
-            // document.body.appendChild(aTag)
-            // aTag.click()
-            // document.body.removeChild(aTag)
+            let blob = new Blob([new Uint8Array(arrayBuffer)], {
+                type: 'audio/wav'
+            })
+            // let blobUrl = URL.createObjectURL(blob)
+            // this.$refs.audio.src = blobUrl
+            this.uploadFile(blob)
         },
         beginRecord: function () {
             let that = this
@@ -86,6 +97,8 @@ export default {
             this.jsNode.disconnect();
             let leftData = this.mergeArray(this.leftDataList)
             let rightData = this.mergeArray(this.rightDataList)
+            this.leftDataList = []
+            this.rightDataList = []
             let allData = this.interleaveLeftAndRight(leftData, rightData);
             let wavBuffer = this.createWavFile(allData);
             this.playRecord(wavBuffer)
@@ -159,7 +172,118 @@ export default {
             for (var i = 0; i < lng; i++) { 
                 view.setUint8(offset + i, string.charCodeAt(i))
             }
+        },
+        uploadFile: function (blob) {
+            let fd = new FormData()
+            // fd.append('file', blob)
+            fd.append('file', blob)
+            this.isLoading = true
+            uploadFunc(fd).then(res => {
+                console.log(res)
+                this.isLoading = false
+                if (res.status === 200) {
+                    this.msgList.push(res.data)
+                }
+                res.data.data.question
+            }).catch(err => {
+                this.isLoading = false
+                console.log('err')
+            })
+        },
+        // beforeUpload: function (event) {
+        //     // console.log(event.target.files[0])
+        //     let fd = new FormData()
+        //     fd.append('file', event.target.files[0])
+        //     uploadFunc(fd).then(res => {
+        //         console.log('success', res.data)
+        //     }).catch(err => {
+        //         console.log('err')
+        //     })
+        // },
+        clickBtn: function () {
+            this.recording = !this.recording
+            this.recording ? this.beginRecord() : this.stopRecord()
         }
     }
 }
 </script>
+<style lang="stylus" scoped>
+.home {
+    border: 1px solid;
+    box-sizing: border-box;
+    height: 100%;
+    overflow: hidden;
+    position: relative;
+    .btn {
+        position: absolute;
+        bottom: 30px;
+        left: 50%;
+        transform: translate(-50%, 0);
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background-color: #f0f0f0;
+        cursor: pointer;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+        // border: 1px solid rgba(0, 0, 0, 0.35);
+        &:before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 40%;
+            height: 40%;
+            background-color: rgba(255, 0, 0, 0.75);
+            border-radius: 4px;
+        }
+        &.stop {
+            &:before {
+                border-radius: 50%;
+            }
+        }
+    }
+    .msgList {
+        padding: 20px;
+        position: absolute;
+        left: 0;
+        top: 0;
+        right: 0;
+        bottom: 160px;
+        overflow-y: auto;
+        &::-webkit-scrollbar {
+            width: 10px;
+        }
+        &::-webkit-scrollbar-thumb {
+            // border: 1px solid red;
+            background-color: rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+        }
+        .item {
+            font-size: 26px;
+            // padding: 0 20px 0 20px;
+            p {
+                border-radius: 4px;
+                display: inline-block;
+                padding: 20px;
+                line-height: 36px;
+                margin-bottom: 20px;
+                max-width: 80%;
+                word-break: break-all;
+            }
+            .answer {
+                p {
+                    background-color: rgb(245, 245, 245);
+                }
+            }
+            .question {
+                text-align: right;
+                p {
+                    text-align: left;
+                    background-color: rgb(158, 234, 106);
+                }
+            }
+        }
+    }
+}
+</style>
